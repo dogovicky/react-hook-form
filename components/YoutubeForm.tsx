@@ -2,11 +2,26 @@
 
 import { useForm } from "react-hook-form"
 import { DevTool } from '@hookform/devtools'
-import { YouTubeDataType } from "@/types/YouTubeDataType";
+import { YouTubeDataType } from "@/types/types";
 
 
 const YoutubeForm = () => {
-  const { register, control, handleSubmit, formState } = useForm<YouTubeDataType>();  // register tracks the form state (like useState), handleSubmit handles submission of the form
+  const { register, control, handleSubmit, formState } = useForm<YouTubeDataType>({
+    defaultValues: async () => {
+        const response = await fetch("https://jsonplaceholder.typicode.com/users/1");
+        const data = await response.json();
+        return {
+            username: data.username,
+            email: data.email,
+            channel: "",
+            social: {
+                twitter: "",
+                instagram: ""
+            },
+            phoneNumbers: ["", ""]
+        }
+    }
+  });  // register tracks the form state (like useState), handleSubmit handles submission of the form
   const { errors } = formState;
   
   const onSubmit = (data: YouTubeDataType) => {
@@ -50,7 +65,23 @@ const YoutubeForm = () => {
             {...register("channel", { required: "Channel is required"})} placeholder='Channel' id='channel' name='channel' /> 
           <p className="text-red-500 font-semibold text-[0.85em]">{errors.channel?.message}</p>
           <br />
+          
+          <label htmlFor="twitter" className='font-bold flex mb-4'>Twitter</label>
+          <input type="text" className='block w-2xl px-1 py-2 text-lg text-white rounded-sm mb-5 border' 
+            {...register("social.twitter")} placeholder='Twitter' id='twitter' name='twitter' />
 
+          <label htmlFor="instagram" className='font-bold flex mb-4'>Instagram</label>
+          <input type="text" className='block w-2xl px-1 py-2 text-lg text-white rounded-sm mb-5 border' 
+            {...register("social.instagram")} placeholder='Instagram' id='instagram' name='instagram' /> 
+          
+          <label htmlFor="primary-phone" className='font-bold flex mb-4'>Phone Numbers</label>
+          <input type="text" className='block w-2xl px-1 py-2 text-lg text-white rounded-sm mb-5 border' 
+            {...register("phoneNumbers.0")} placeholder='Phone Numbers' id='primary-phone' name='primary-phone' /> 
+
+          <label htmlFor="secondary-phone" className='font-bold flex mb-4'>Phone Numbers</label>
+          <input type="text" className='block w-2xl px-1 py-2 text-lg text-white rounded-sm mb-5 border' 
+            {...register("phoneNumbers.1")} placeholder='Phone Numbers' id='secondary-phone' name='secondary-phone' /> 
+        
           <button className='px-4 py-2 outline-0 bg-gray-700 rounded-sm cursor-pointer'>Submit</button>
 
         </form>
