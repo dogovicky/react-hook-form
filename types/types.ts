@@ -9,6 +9,11 @@ export interface YouTubeDataType {
         instagram: string;
     };
     phoneNumbers: string[];
+    numbers: {
+        number: string;
+    }[];
+    age: number;
+    dateOfBirth: Date
 }
 
 export interface LoginData {
