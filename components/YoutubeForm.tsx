@@ -1,12 +1,13 @@
 'use client'
 
-import { useForm, useFieldArray } from "react-hook-form"
+import { useEffect } from "react";
+import { useForm, useFieldArray, FieldErrors } from "react-hook-form"
 import { DevTool } from '@hookform/devtools'
 import { YouTubeDataType } from "@/types/types";
 
 
 const YoutubeForm = () => {
-  const { register, control, handleSubmit, formState } = useForm<YouTubeDataType>({
+  const { register, control, handleSubmit, formState, watch, getValues, setValue, reset, trigger } = useForm<YouTubeDataType>({
     defaultValues: async () => {
         const response = await fetch("https://jsonplaceholder.typicode.com/users/1");
         const data = await response.json();
@@ -21,27 +22,60 @@ const YoutubeForm = () => {
             phoneNumbers: ["", ""],
             numbers: [ { number: "" } ],
             age: 0,
-            dateOfBirth: new Date()
+            dateOfBirth: new Date(),
         }
-    }
+    },
+    mode: "all"
   });  // register tracks the form state (like useState), handleSubmit handles submission of the form
-  const { errors } = formState;
+  const { errors, touchedFields, dirtyFields, isDirty, isValid, isSubmitting, isSubmitted, isSubmitSuccessful, submitCount } = formState;
+
+//   console.log(touchedFields, isDirty);
+//   console.log(dirtyFields)
+  console.log(isValid);
+  console.log(isSubmitting);
+  console.log("Is Submitted", isSubmitted);
+  console.log("Is Submit Successful", isSubmitSuccessful)
+  console.log("Submit count: ", submitCount)
 
   const { fields, append, remove } = useFieldArray({
     name: "numbers",
     control
   })
+
+//   const watchForm = watch([]);
+  const handleGetValues = () => {
+    console.log(getValues("social.twitter"));
+  }
+
+  const handleSetValue = () => {
+    setValue("username", "", {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true
+    });
+  }
   
   const onSubmit = (data: YouTubeDataType) => {
     console.log("Form Submitted", data);
 
   }
+
+  useEffect(() => {
+    if (isSubmitSuccessful) {
+      reset();
+    }
+  }, [isSubmitSuccessful, reset])
+
+  const onError = (errors: FieldErrors<YouTubeDataType>) => {
+    console.log("Errors: ", errors)
+  }
   
   return (
     <>
       <h1>YouTube Form </h1>
+      
       <div className='container shadow-lg flex align-center justify-center items-center '>
-        <form onSubmit={handleSubmit(onSubmit)} noValidate>
+        <form onSubmit={handleSubmit(onSubmit, onError)} noValidate>
           <label htmlFor="username" className='font-bold flex mb-4'>Username</label>
           <input type="text" className='block w-2xl px-1 py-2 text-lg text-white rounded-sm mb-5 border'
             {...register("username", { required: { value: true, message: "Please enter a username"}})} 
@@ -61,6 +95,12 @@ const YoutubeForm = () => {
                       },
                       notBlackListed: (fieldValue) => {
                         return !fieldValue.endsWith("baddomain.com") || "This domain is not supported"
+                      },
+                      emailAvailable: async (fieldValue) => {
+                        const response = await fetch(`https://jsonplaceholder.typicode.com/users?email=${fieldValue}`);
+                        const data = await response.json();
+
+                        return data.length == 0 || "Email already exists";
                       }
                   }
                 })} 
@@ -77,7 +117,7 @@ const YoutubeForm = () => {
           {/* Nested objects */}
           <label htmlFor="twitter" className='font-bold flex mb-4'>Twitter</label>
           <input type="text" className='block w-2xl px-1 py-2 text-lg text-white rounded-sm mb-5 border' 
-            {...register("social.twitter")} placeholder='Twitter' id='twitter' name='twitter' />
+            {...register("social.twitter", { disabled: watch("channel") === "" })} placeholder='Twitter' id='twitter' name='twitter' />
 
           <label htmlFor="instagram" className='font-bold flex mb-4'>Instagram</label>
           <input type="text" className='block w-2xl px-1 py-2 text-lg text-white rounded-sm mb-5 border' 
@@ -123,8 +163,15 @@ const YoutubeForm = () => {
                 <button type="button" onClick={() => append({ number: "" })}>Add Phone Number</button>
             </div>
           </div>
+
+          <button type="button" onClick={handleGetValues}>Get Values</button>
+          <button type="button" onClick={handleSetValue}>Set Value</button>
         
-          <button className='px-4 py-2 outline-0 bg-gray-700 rounded-sm cursor-pointer'>Submit</button>
+          <button className='px-4 py-2 outline-0 bg-gray-700 rounded-sm cursor-pointer' disabled={!isDirty || isSubmitting}>Submit</button>
+          <button type="button" onClick={() => reset()}>Reset</button>
+
+          <button type="button" onClick={() => trigger("channel")}>Validate</button>
+
 
         </form>
         <DevTool control={control}/>
